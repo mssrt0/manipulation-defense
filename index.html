@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Patrones de comunicación difíciles | Español・日本語</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0d10;--panel:#12161c;--panel2:#171c23;--line:#2a313b;--text:#eef2f7;--muted:#aab4c0;--accent:#79b8ff;--good:#9fe3c3;--warn:#ffcb6b;--bad:#ff8f8f;--purple:#c9a7ff}
+*{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:radial-gradient(circle at 12% 0%,rgba(121,184,255,.08),transparent 25rem),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP","Segoe UI",sans-serif;line-height:1.72}
+.wrap{max-width:1720px;margin:auto;padding:38px 26px 60px} .hero,.card,.table-wrap,.ref{background:var(--panel);border:1px solid var(--line);border-radius:18px} .hero{padding:30px} h1{margin:0 0 10px;font-size:clamp(20px,2.35vw,28px);line-height:1.25} h2{margin:34px 0 14px} .lead,.muted{color:var(--muted)} .note{margin-top:16px;padding:12px 14px;border-left:4px solid var(--warn);background:rgba(255,203,107,.07);border-radius:10px}
+.mn{display:grid;grid-template-columns:1fr 1fr;gap:16px} .card{padding:22px} .bad{border-top:4px solid var(--bad)} .good{border-top:4px solid var(--good)} .big{font-size:31px;font-weight:800;letter-spacing:.13em;margin:3px 0 12px} .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px} .mini{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+.example-strip{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#0e1217;font-size:13px;line-height:1.6}.example-strip .badex{color:#ffc6c6}.example-strip .goodex{color:#c7f3dc}.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px} .pill{padding:7px 11px;border-radius:999px;background:#11161c;border:1px solid var(--line);font-weight:700} .arr{color:var(--muted)}
+.table-wrap{overflow:auto;margin-top:18px} table{border-collapse:separate;border-spacing:0;width:100%;min-width:1600px} th{position:sticky;top:0;z-index:3;background:#0f1318;color:#fff;border-bottom:1px solid var(--line);padding:13px;text-align:left;vertical-align:bottom;font-size:12.5px;line-height:1.35} td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:top;font-size:12.5px} tr:nth-child(even) td{background:rgba(255,255,255,.014)} tr:hover td{background:rgba(121,184,255,.045)} .attack{font-weight:800} .kimari{font-weight:800;color:var(--purple);white-space:nowrap} .catch{font-weight:700;color:#d9e6f4}
+.formula,.scene{background:#0e1217;border:1px solid #202832;border-radius:10px;padding:9px 10px} .formula{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#d6e5ff;line-height:1.6} .scene>div+div{margin-top:5px} .a{color:#d8f2ff} .b{color:#ffd4d4} .bg{color:var(--muted);font-size:13px} .tag{display:inline-block;padding:2px 7px;border:1px solid var(--line);border-radius:999px;font-size:11px;font-weight:800;margin:0 4px 4px 0} .avoid{color:#ffb9b9;background:rgba(255,143,143,.06)} .use{color:#bff0d5;background:rgba(159,227,195,.06)} .defcatch{font-weight:800;color:var(--good)} .ref{padding:18px 20px;margin-top:26px;color:var(--muted);font-size:13px}
+@media(max-width:900px){.wrap{padding:22px 14px 40px}.hero{padding:22px 18px}.mn,.grid{grid-template-columns:1fr}}
+
+.srcnote{margin:14px 0 0;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#0e1217;color:#dce4ed;font-size:13px;line-height:1.55}
+.src-label{display:inline-block;margin-right:7px;padding:2px 7px;border-radius:999px;background:rgba(121,184,255,.09);border:1px solid #304052;color:#b9dcff;font-size:11px;font-weight:800}
+.src-book{color:var(--muted);font-size:12px}
+.source-panel{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
+.source-head h2{margin:0 0 6px}.source-head p{margin:0}.jade-inline{display:block;font-size:inherit;color:inherit;margin-top:2px}
+.source-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.source-card{background:#0e1217;border:1px solid #202832;border-radius:14px;padding:15px 16px}
+.source-topic{font-weight:800;color:#dfeaff;margin-bottom:7px}
+.source-card blockquote{margin:0 0 8px;padding:8px 10px;border-left:3px solid var(--accent);background:rgba(121,184,255,.045);color:#f0f5fa;font-size:13px;line-height:1.55}
+.source-card p{margin:0 0 8px;color:#cfd7df;font-size:13px}
+.source-cite{color:var(--muted);font-size:11.5px;line-height:1.45}
+@media(max-width:1100px){.source-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.source-grid{grid-template-columns:1fr}}
+
+
+
+
+
+
+/* ===== Responsive table layout ===== */
+
+/* PC: 画面幅に収め、横スクロールを基本的に出さない */
+.table-wrap{
+  overflow-x:visible;
+}
+
+table{
+  width:100%;
+  min-width:0 !important;
+  table-layout:fixed;
+}
+
+thead th,
+tbody td{
+  overflow-wrap:anywhere;
+  word-break:normal;
+  hyphens:auto;
+}
+
+/* 8列の配分。比較列は以前より控えめにしつつ、読みやすさを確保 */
+table th:nth-child(1), table td:nth-child(1){width:8%;}
+table th:nth-child(2), table td:nth-child(2){width:7%;}
+table th:nth-child(3), table td:nth-child(3){width:11%;}
+table th:nth-child(4), table td:nth-child(4){width:12%;}
+table th:nth-child(5), table td:nth-child(5){width:19%;}
+table th:nth-child(6), table td:nth-child(6){width:13%;}
+table th:nth-child(7), table td:nth-child(7){width:18%;}
+table th:nth-child(8), table td:nth-child(8){width:12%;}
+
+thead th{
+  font-size:11.5px;
+  padding:11px 9px;
+}
+
+tbody td{
+  font-size:11.5px;
+  padding:12px 9px;
+  line-height:1.58;
+}
+
+.formula,
+.scene{
+  font-size:11.2px;
+}
+
+.scene{
+  padding:9px 10px;
+}
+
+.attack,
+.kimari,
+.catch,
+.defcatch{
+  line-height:1.45;
+}
+
+/* 比較列だけ少し穏やかな背景にして見分けやすく */
+table th:nth-child(6){
+  background:#151a20;
+}
+table td:nth-child(6){
+  background:rgba(121,184,255,.025);
+}
+
+/* 大きめPCでは少しゆったり */
+@media (min-width:1500px){
+  thead th{font-size:12px;padding:12px 10px;}
+  tbody td{font-size:12px;padding:13px 10px;}
+  .formula,.scene{font-size:11.7px;}
+}
+
+/* ノートPC幅ではさらに少し圧縮 */
+@media (max-width:1250px) and (min-width:761px){
+  .wrap{max-width:none;padding-left:14px;padding-right:14px;}
+  thead th{font-size:10.7px;padding:9px 7px;}
+  tbody td{font-size:10.7px;padding:10px 7px;line-height:1.52;}
+  .formula,.scene{font-size:10.4px;padding:8px;}
+}
+
+/* スマホ：横長表をカード型に変換して、横スクロールをなくす */
+@media (max-width:760px){
+  .wrap{
+    padding:16px 10px 32px;
+  }
+
+  .table-wrap{
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    overflow:visible;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td{
+    display:block;
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+  }
+
+  thead{
+    display:none;
+  }
+
+  tbody tr{
+    margin:0 0 16px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    background:var(--panel);
+    box-shadow:var(--shadow);
+  }
+
+  tbody td{
+    position:relative;
+    padding:10px 11px 10px 11px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+    line-height:1.58;
+    background:transparent !important;
+  }
+
+  tbody td:last-child{
+    border-bottom:0;
+  }
+
+  tbody td::before{
+    content:attr(data-label);
+    display:block;
+    margin-bottom:4px;
+    color:var(--muted);
+    font-size:10.5px;
+    font-weight:800;
+    letter-spacing:.02em;
+  }
+
+  tbody td:first-child{
+    padding-top:13px;
+  }
+
+  tbody td:first-child::before{
+    display:none;
+  }
+
+  .attack{
+    font-size:16px;
+  }
+
+  .kimari{
+    font-size:14px;
+  }
+
+  .formula,
+  .scene{
+    font-size:12.5px;
+  }
+
+  .scene{
+    margin-top:2px;
+  }
+
+  /* スマホでは「攻撃カード」と「相撲風の決まり手」を目立たせる */
+  tbody td:nth-child(1),
+  tbody td:nth-child(2){
+    background:rgba(255,255,255,.018) !important;
+  }
+}
+
+/* Selector de idioma — por defecto español */
+[hidden]{display:none!important;}
+.language-toolbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:9px max(18px,calc((100vw - 1720px)/2 + 26px));background:rgba(11,13,16,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}
+.language-caption{color:var(--muted);font-size:12px;margin-right:5px}
+.lang-choice{font:inherit;font-weight:700;font-size:12px;background:var(--panel2);border:1px solid #38414c;border-radius:999px;color:#bbc6d2;cursor:pointer;padding:7px 14px}
+.lang-choice.is-active{color:#07151a;background:#a9eacb;border-color:#a9eacb}
+.lang-choice:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.lang-panel h2{font-size:21px}
+.lang-panel .big{font-size:clamp(19px,2vw,29px);letter-spacing:.015em;line-height:1.3}
+.lang-panel[lang="es"] .mini{line-height:1.55;font-size:13px}
+.lang-panel[lang="es"] .attack{overflow-wrap:anywhere}
+.compare-label{font-weight:750;color:#b5d7f6}
+.lang-panel[lang="es"] .source-card blockquote{font-style:italic}
+@media(max-width:1100px){.lang-panel[lang="es"] .table-wrap{overflow:visible}.lang-panel[lang="es"] table,.lang-panel[lang="es"] thead,.lang-panel[lang="es"] tbody,.lang-panel[lang="es"] tr,.lang-panel[lang="es"] th,.lang-panel[lang="es"] td{display:block;width:100%!important;max-width:none!important;min-width:0!important}.lang-panel[lang="es"] thead{display:none}.lang-panel[lang="es"] tbody tr{margin:0 0 16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}.lang-panel[lang="es"] tbody td{padding:10px 13px;border-bottom:1px solid var(--line);background:transparent!important;font-size:13px;line-height:1.62}.lang-panel[lang="es"] tbody td::before{content:attr(data-label);display:block;color:var(--muted);font-size:11px;font-weight:700;margin-bottom:4px}.lang-panel[lang="es"] tbody td:first-child{font-weight:800;font-size:16px}.lang-panel[lang="es"] tbody td:first-child::before{display:none}.lang-panel[lang="es"] tbody td:last-child{border-bottom:none}.lang-panel[lang="es"] .scene,.lang-panel[lang="es"] .formula{font-size:12.5px}}
+@media(max-width:760px){.language-toolbar{padding:9px 12px}.language-caption{font-size:11px}.lang-choice{padding:7px 11px}.lang-panel h2{font-size:19px}.lang-panel[lang="es"] .card{padding:16px}.lang-panel[lang="es"] .big{font-size:21px}}
+</style>
+</head>
+<body><div aria-label="Idioma / 言語" class="language-toolbar" role="group">
+<span class="language-caption">Idioma / 言語</span>
+<button aria-pressed="true" class="lang-choice is-active" data-switch-lang="es" type="button">Español</button>
+<button aria-pressed="false" class="lang-choice" data-switch-lang="ja" type="button">日本語</button>
+</div><div class="wrap lang-panel" id="panel-es" lang="es">
+<section class="hero">
+<h1>Patrones de comunicación difíciles y formas de responder</h1>
+<p class="lead">Guía práctica para reconocer desvíos, presiones y cambios de tema en conversaciones tensas, con ejemplos, comparaciones y respuestas breves.</p>
+</section>
+<h2>Qué conviene hacer (BIFF) y qué conviene evitar (JADE)</h2>
+<section class="mn">
+<div class="card good">
+<h3>BIFF · lo que conviene hacer</h3>
+<div class="big">Breve · Informativo · Amable · Firme</div>
+<div class="grid">
+<div class="mini"><b>B</b> = Breve<br/>Una o dos frases bastan.</div>
+<div class="mini"><b>I</b> = Informativo<br/>Solo hechos y datos necesarios.</div>
+<div class="mini"><b>F</b> = Friendly (amable)<br/>Hablar con respeto, sin hostilidad.</div>
+<div class="mini"><b>F</b> = Firme<br/>No dejar el límite ambiguo.</div>
+</div>
+<p><b>Para recordar:</b> «Pocas palabras, hechos, amabilidad y firmeza».</p>
+<p class="srcnote"><span class="src-label">Cita del libro</span> “brief, informative, friendly, and firm”<br/><span class="src-book">Randi Kreger, Christine Adamec y Daniel S. Lobel, Stop Walking on Eggshells for Parents, capítulo 7.</span></p></div><div class="card bad">
+<h3>JADE · lo que conviene evitar</h3>
+<div class="big">Justificar · Discutir · Defenderse · Explicar de más</div>
+<div class="grid">
+<div class="mini"><b>J</b> = Justify<br/>Dar muchas razones para legitimarse.</div>
+<div class="mini"><b>A</b> = Argue<br/>Entrar a discutir para ganar.</div>
+<div class="mini"><b>D</b> = Defend<br/>Tratar de probar que uno no es así.</div>
+<div class="mini"><b>E</b> = Overexplain<br/>Agregar explicaciones sin fin.</div>
+</div>
+<p><b>Para recordar:</b> «Cada explicación puede abrir otra discusión».</p>
+<p class="srcnote"><span class="src-label">Cita del libro</span> “Horde your words like silver dollars and do not JADE.”<span class="jade-inline">JADE = Justify (justificarse) / Argue (discutir) / Defend (defenderse) / Overexplain (explicar de más)</span><br/><span class="src-book">Randi Kreger, Christine Adamec y Daniel S. Lobel, Stop Walking on Eggshells for Parents, capítulo 7.</span></p></div></section>
+<div class="example-strip"><b>Ejemplo:</b>
+<span class="a">A: «Hoy no puedo quedarme, así que me voy».</span><br/>
+<span class="b">B: «De verdad, qué poco sociable eres».</span><br/>
+<span class="badex">Evita JADE: «J: Mañana trabajo… A: ¡Qué forma de hablarme! D: Normalmente sí participo… E: Además, últimamente estoy muy cansado y…»</span>
+<span> → </span>
+<span class="goodex">BIFF: «Hoy no puedo quedarme. Que lo paséis bien; me marcho ya». (Repetirlo con calma, como un disco rayado).</span></div>
+<h2>Lista de patrones de conversación</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>Patrón</th>
+<th>Nombre metafórico al estilo sumo</th>
+<th>Imagen o frase clave</th>
+<th>Cómo funciona</th>
+<th>Ejemplo</th><th class="diff-head">En qué se diferencia de otros</th>
+<th>Respuesta básica</th>
+<th>Frase para recordar</th>
+</tr></thead>
+<tbody>
+<tr>
+<td class="attack" data-label="Patrón">Gaslighting · distorsión de la realidad</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Derribo de la realidad</td>
+<td class="catch" data-label="Imagen o frase clave">«Inclinar el suelo y luego decirte: “Eres tú quien se tambalea”.»</td>
+<td data-label="Cómo funciona"><span class="formula">Hecho X → negar o alterar X → presentar X′ como verdad → hacer que la otra persona dude de X</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="bg">(En realidad, A prestó el móvil solo para consultar un mapa)</div><div class="b">B: «Me dijiste que podía mirar lo que quisiera, ¿no?»</div><div class="a">A: «Te lo presté únicamente para ver el mapa.»</div><div class="b">B: «No, dijiste que podía mirar lo que quisiera. ¿Ya no te acuerdas?»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Hombre de paja〉</strong><br/>El hombre de paja cambia lo que alguien dijo. El gaslighting cambia la versión de lo que ocurrió y busca que la otra persona dude de su memoria.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag avoid">Evitar JADE</span><br/>No decidir qué ocurrió solo por una discusión. Guardar pruebas cuando sea importante y no justificar una y otra vez la propia memoria.</td>
+<td class="defcatch" data-label="Frase para recordar">«No dejes que otra persona reescriba tus recuerdos».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Straw Man · hombre de paja</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Cambio de argumento</td>
+<td class="catch" data-label="Imagen o frase clave">«Apartar lo que dijiste y atacar una versión inventada».</td>
+<td data-label="Cómo funciona"><span class="formula">Afirmación X → exagerarla o deformarla → crear X′ → atacar X′ → dejar X sin responder</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Por favor, no mires mi móvil sin permiso.»</div><div class="b">B: «O sea, ¿quieres que no me interese nada de ti?»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Whataboutism〉</strong><br/>El hombre de paja transforma X en X′. El whataboutism deja X intacta y cambia a otro asunto Y.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Aplicar BIFF</span><br/>No justificar la versión falsa X′. Repetir con calma lo que realmente se pidió: X.</td>
+<td class="defcatch" data-label="Frase para recordar">«No discutas con una versión inventada».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Projection · proyección</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Devolver el barro</td>
+<td class="catch" data-label="Imagen o frase clave">«Atribuirte el barro que lleva uno mismo».</td>
+<td data-label="Cómo funciona"><span class="formula">Problema propio P → atribuir P a la otra persona → hacer que esa persona se defienda de P</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Por favor, no mires mi móvil sin permiso.»</div><div class="b">B: «Si necesitas esconderlo tanto, la persona en la que no se puede confiar eres tú.»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Desplazamiento de culpa〉</strong><br/>La proyección atribuye al otro un rasgo o problema propio. El desplazamiento de culpa traslada al otro la responsabilidad por una acción concreta.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag avoid">No entrar a defenderse</span><br/>No pasar automáticamente a demostrar que se es digno de confianza. Volver a la conducta concreta que se está tratando.</td>
+<td class="defcatch" data-label="Frase para recordar">«No limpies el barro que no es tuyo».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Blame Shifting · desplazamiento de culpa</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Pasar la factura</td>
+<td class="catch" data-label="Imagen o frase clave">«Hacer algo y pasarle al otro la factura».</td>
+<td data-label="Cómo funciona"><span class="formula">B hace algo → «Tu conducta A me obligó» → B traslada a A la responsabilidad</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Por favor, no mires mi móvil sin permiso.»</div><div class="b">B: «Con lo sospechoso que te comportas, no me quedaba otra que mirarlo.»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Proyección〉</strong><br/>Aquí la frase es «Lo hice por tu culpa». En la proyección, la idea es «El problema que tengo yo lo tienes tú».</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Hechos + firmeza</span><br/>Se pueden escuchar las razones o emociones de B sin asumir la responsabilidad por lo que B decidió hacer.</td>
+<td class="defcatch" data-label="Frase para recordar">«Escuchar las razones no es cargar con la culpa».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">DARVO · negación, ataque e inversión de papeles</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Invertir los papeles</td>
+<td class="catch" data-label="Imagen o frase clave">«Al recibir una queja, cambiarse al asiento de la víctima».</td>
+<td data-label="Cómo funciona"><span class="formula">Se señala X → negar (Deny) → atacar (Attack) → invertir víctima y responsable (Reverse Victim and Offender)</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Ayer miraste mi móvil sin permiso, ¿verdad?»</div><div class="b">B: «No lo miré. ¿Y tú te has parado a pensar cómo me siento cuando desconfías así de mí?»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Desplazamiento de culpa〉</strong><br/>El desplazamiento de culpa pasa la responsabilidad al otro. DARVO añade una secuencia: negar, atacar y presentarse como la parte perjudicada.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag avoid">No perderse en la defensa</span><br/>Mantener presente el hecho inicial. No convertir la conversación en un juicio sobre la propia personalidad o sobre si B se sintió herido.</td>
+<td class="defcatch" data-label="Frase para recordar">«No participes en el intercambio de papeles».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Circular Conversation / Word Salad · conversación circular</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Dispersar el tema</td>
+<td class="catch" data-label="Imagen o frase clave">«Responder a una pregunta lanzando cien pelotas».</td>
+<td data-label="Cómo funciona"><span class="formula">Tema X → introducir Y1, Y2, Y3… → saturar con información → hacer desaparecer X</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Por favor, no mires mi móvil sin permiso.»</div><div class="b">B: «Últimamente llegas tarde, cierras WhatsApp enseguida, el otro día hiciste algo raro y además tú siempre has sido…»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Whataboutism〉</strong><br/>El whataboutism suele mover la conversación a otro tema Y. Aquí se acumulan muchos temas a la vez, hasta tapar la pregunta inicial.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Breve + informativo</span><br/>Tratar un solo tema cada vez: «Ahora estamos hablando de que miraste mi móvil sin permiso». Si sigue la dispersión, terminar la charla.</td>
+<td class="defcatch" data-label="Frase para recordar">«Aunque lancen cien pelotas, recoge solo una».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Whataboutism · «¿y tú qué?»</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Desviar el camino</td>
+<td class="catch" data-label="Imagen o frase clave">«Llevarte del incendio de hoy a otro incendio».</td>
+<td data-label="Cómo funciona"><span class="formula">Se plantea X → «¿Y cuando tú hiciste Y?» → pasar a Y sin resolver X</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Por favor, no mires mi móvil sin permiso.»</div><div class="b">B: «Tú también tocaste mi móvil una vez, ¿o no?»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Hombre de paja〉</strong><br/>No cambia X por una versión exagerada. Cambia de tema: «¿Y tú qué?». La cuestión inicial X queda sin respuesta.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Breve + hechos + firmeza</span><br/>No empezar a discutir Y en ese momento. «Ese es otro asunto. Ahora estamos hablando de esto».</td>
+<td class="defcatch" data-label="Frase para recordar">«Cada asunto, en su caja».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Moving the Goalposts · mover la meta</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Cambiar la medida</td>
+<td class="catch" data-label="Imagen o frase clave">«Mover la línea de llegada justo cuando llegas».</td>
+<td data-label="Cómo funciona"><span class="formula">Pedir condición G1 → se cumple G1 → añadir G2 → se cumple G2 → añadir G3…</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="b">B: «Si no ocultas nada, enséñame los mensajes de ayer.»</div><div class="a">A: «De acuerdo, aquí están.»</div><div class="b">B: «Con eso no basta. Déjame ver también los mensajes que borraste.»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Trampa JADE〉</strong><br/>Mover la meta cambia los requisitos para dar algo por suficiente. La trampa JADE pide cada vez más explicaciones para luego discutirlas.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Hechos + firmeza</span><br/>Recordar qué se pidió al principio y tratar cualquier nueva condición como una petición distinta.</td>
+<td class="defcatch" data-label="Frase para recordar">«Si mueven la meta, no la persigas».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Triangulation · triangulación</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Traer a un tercero</td>
+<td class="catch" data-label="Imagen o frase clave">«Meter a una tercera persona en una conversación de dos».</td>
+<td data-label="Cómo funciona"><span class="formula">Problema entre A y B → introducir a C → usar la opinión de C para presionar a A</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Por favor, no mires mi móvil sin permiso.»</div><div class="b">B: «C también dice que, entre parejas, es normal enseñar el móvil.»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Campaña de desprestigio〉</strong><br/>La triangulación usa la opinión de C para presionar a A. El desprestigio consiste en difundir una versión dañina sobre A entre terceros.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Hechos + firmeza</span><br/>No tomar como prueba una opinión atribuida a otra persona. Si importa, comprobar directamente qué dijo.</td>
+<td class="defcatch" data-label="Frase para recordar">«Un mensaje de segunda mano no es una prueba».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Smear Campaign · campaña de desprestigio</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Manchar la reputación</td>
+<td class="catch" data-label="Imagen o frase clave">«Como no puedes convencer a alguien, intentas cambiar lo que otros piensan de esa persona».</td>
+<td data-label="Cómo funciona"><span class="formula">Conflicto X → contar una versión distorsionada X′ a terceros → reducir la confianza en A</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="bg">(Más tarde, B le dice a C)</div><div class="b">B: «A nunca me deja ver su móvil. Seguro que oculta algo.»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Triangulación〉</strong><br/>La triangulación usa lo que supuestamente dice C para presionar a A. El desprestigio lleva a C una historia que perjudica a A.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag avoid">No discutir con todo el mundo</span><br/>No intentar convencer a todas las personas. Aclarar los hechos solo a quienes sea necesario, con pruebas si las hay.</td>
+<td class="defcatch" data-label="Frase para recordar">«No convenzas a toda la ciudad; muestra los hechos a quien importe».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Baiting / Provocation · provocación</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Pescar una reacción</td>
+<td class="catch" data-label="Imagen o frase clave">«Pinchar hasta que reacciones y luego culparte por reaccionar».</td>
+<td data-label="Cómo funciona"><span class="formula">Provocar varias veces → obtener reacción R → ignorar la provocación → usar R contra A</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="b">B: «¿Qué tienes en el móvil que te preocupa tanto que vea?»</div><div class="a">A: «No se trata de eso.»</div><div class="b">B: «Vaya, te pones muy a la defensiva. Eso sí que resulta sospechoso.»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Intimidación〉</strong><br/>La provocación busca que A reaccione para usar su reacción en su contra. La intimidación usa el enfado o las amenazas de B para hacer retroceder a A.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag avoid">Evitar discutir o defenderse</span><br/>No contestar a cada provocación. Responder de forma neutra, poner un límite breve y alejarse si hace falta.</td>
+<td class="defcatch" data-label="Frase para recordar">«No muerdas el anzuelo».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Rage / Intimidation · ira e intimidación</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Empujar con miedo</td>
+<td class="catch" data-label="Imagen o frase clave">«Sustituir las razones por gritos y miedo».</td>
+<td data-label="Cómo funciona"><span class="formula">A marca un límite X → B grita o intimida → aumenta el miedo → A cede en X</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Por favor, deja de mirar mi móvil sin permiso.»</div><div class="b">B: «¡Ya basta! ¡¿Me estás acusando de algo?!»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Provocación〉</strong><br/>Aquí B usa directamente sus gritos o amenazas para presionar. En la provocación, B busca enfadar a A y luego utiliza esa reacción.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Breve + firme</span><br/>No intentar razonar mientras hay gritos. Hacer una pausa o salir; si hay peligro, priorizar la seguridad.</td>
+<td class="defcatch" data-label="Frase para recordar">«No se celebra una reunión en medio de un incendio».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Silent Treatment / Stonewalling · silencio punitivo</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Apretar con silencio</td>
+<td class="catch" data-label="Imagen o frase clave">«Callarse para que el otro termine persiguiendo una respuesta».</td>
+<td data-label="Cómo funciona"><span class="formula">Conflicto X → cortar respuestas o contacto → aumentar la inquietud de A → A persigue, pide perdón o cede</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Me gustaría hablar de lo que pasó ayer con mi móvil.»</div><div class="b">B: «…»</div><div class="a">A: «¿Puedes al menos responderme?»</div><div class="b">B: «…»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Intimidación〉</strong><br/>La intimidación presiona con ruido, ira o amenazas. El silencio punitivo presiona retirando la respuesta. No toda pausa es un castigo.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Breve + firme</span><br/>Enviar una comunicación necesaria una sola vez y no perseguir una respuesta indefinidamente. Seguir con la propia vida.</td>
+<td class="defcatch" data-label="Frase para recordar">«No llames cien veces a una puerta cerrada».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Hoovering · intento de recuperar el vínculo</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Absorber de vuelta</td>
+<td class="catch" data-label="Imagen o frase clave">«Cuando te alejas, tratar de atraerte otra vez con mucha fuerza».</td>
+<td data-label="Cómo funciona"><span class="formula">A toma distancia → B intensifica disculpas, afecto o promesas → A vuelve → reaparece el patrón anterior</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="bg">(B ha mirado el móvil de A repetidamente y A plantea terminar la relación)</div><div class="a">A: «Quiero alejarme de esta relación.»</div><div class="b">B: «Ahora lo entiendo todo. No volverá a pasar. Eres la única persona para mí.»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Love Bombing〉</strong><br/>Love bombing suele acelerar la intimidad al principio de un vínculo. Hoovering intenta atraer de nuevo a alguien que ya se ha alejado.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag avoid">No volver precipitadamente</span><br/>Dar más valor a los cambios de conducta sostenidos en el tiempo que a las palabras del momento.</td>
+<td class="defcatch" data-label="Frase para recordar">«Mira las estaciones, no el ramo de flores».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">Love Bombing · bombardeo de amor</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Cubrir de afecto</td>
+<td class="catch" data-label="Imagen o frase clave">«Subir de golpe varios escalones de intimidad».</td>
+<td data-label="Cómo funciona"><span class="formula">Muchos elogios y contactos en poco tiempo → cercanía acelerada → bajan los límites personales</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="bg">(A y B se conocen desde hace poco)</div><div class="b">B: «Quiero compartirlo todo contigo. Vamos a intercambiar también nuestras contraseñas. No tenemos nada que ocultar, ¿verdad?»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Hoovering〉</strong><br/>Love bombing aparece al acelerar la cercanía en la fase inicial. Hoovering busca recuperar el contacto tras una separación o un distanciamiento.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag use">Breve + firme</span><br/>Ir despacio. No compartir enseguida claves, datos privados, dinero ni acceso al teléfono.</td>
+<td class="defcatch" data-label="Frase para recordar">«La intimidad también necesita límites de velocidad».</td>
+</tr>
+<tr>
+<td class="attack" data-label="Patrón">JADE Trap · trampa de las explicaciones</td>
+<td class="kimari" data-label="Nombre metafórico al estilo sumo">Hundirse explicando</td>
+<td class="catch" data-label="Imagen o frase clave">«Cuanto más explicas, más material das para que te rebatan».</td>
+<td data-label="Cómo funciona"><span class="formula">A fija un límite X → B pide razón 1 → discute la razón 1 → pide razón 2 → la discute → repetir</span></td>
+<td data-label="Ejemplo"><div class="scene"><div class="a">A: «Por favor, no mires mi móvil sin permiso.»</div><div class="b">B: «¿Por qué no? ¡Si somos pareja!»</div><div class="a">A: «Porque es privado.»</div><div class="b">B: «Entonces, si no escondes nada, ¿qué problema hay con que lo mire?»</div></div></td><td class="diff" data-label="En qué se diferencia de otros"><strong class="compare-label">〈Frente a: Mover la meta〉</strong><br/>La trampa JADE pide razones una tras otra y las va cuestionando. Mover la meta cambia los requisitos aunque ya se hayan cumplido.</td>
+<td class="defense" data-label="Respuesta básica"><span class="tag avoid">Evitar JADE</span><span class="tag use">Volver a BIFF</span><br/>Dejar de justificarse, discutir, defenderse o explicar de más. Repetir el límite de manera breve.</td>
+<td class="defcatch" data-label="Frase para recordar">«Cuanto más explicas, más te hundes».</td>
+</tr>
+</tbody>
+</table>
+</div>
+<section class="source-panel">
+<div class="source-head">
+<h2>Qué dicen los libros: ideas para responder</h2>
+<p class="muted">Las citas breves se mantienen en su idioma original; debajo explicamos su sentido en español. Los nombres metafóricos no son términos formales de los libros.</p>
+</div>
+<div class="source-grid">
+<article class="source-card">
+<div class="source-topic">Distorsión de la realidad / Gaslighting</div>
+<blockquote>“leading him/her to question his/her perceptions of reality”</blockquote>
+<p>Se describe como una forma de llevar a alguien a dudar de su propia percepción de la realidad.</p>
+<div class="source-cite">Julie L. Hall, <i>The Narcissist in Your Life</i>, Glossary: “gaslighting”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">Gray Rock · respuesta neutra</div>
+<blockquote>“dull and nonreactive, like a colorless, unmoving, impervious rock”</blockquote>
+<p>Responder de forma poco reactiva ante la provocación puede ayudar a no intensificar el conflicto.</p>
+<div class="source-cite">Julie L. Hall, <i>The Narcissist in Your Life</i>, Glossary: “gray rock”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">Los límites se muestran con hechos</div>
+<blockquote>“Actions are more believable and have more impact than words.”</blockquote>
+<p>En lugar de explicar un límite indefinidamente, importa decidir qué se hará y llevarlo a la práctica.</p>
+<div class="source-cite">Margalis Fjelstad, <i>Stop Caretaking the Borderline or Narcissist</i>, Chapter 16, “Take Action, Not Discussion”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">Lo que tú decides hacer</div>
+<blockquote>“You hold power primarily over what you will do if the boundary is breached.”</blockquote>
+<p>Un límite no es una orden para controlar a la otra persona: aclara qué harás tú si se cruza.</p>
+<div class="source-cite">Margalis Fjelstad, <i>Stop Caretaking the Borderline or Narcissist</i>, Chapter 16, “Set Boundaries and Limits”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">Time-out · hacer una pausa</div>
+<blockquote>“consider taking a time-out so both of you can cool down”</blockquote>
+<p>Si la conversación sube de tono, conviene detenerla, apartarse y retomarla cuando haya calma.</p>
+<div class="source-cite">Wendy T. Behary, <i>Disarming the Narcissist</i>, Chapter 7, “Using Empathic Confrontation”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">Dispersión del tema</div>
+<blockquote>“circular conversations and word salad”</blockquote>
+<p>Las conversaciones circulares y la «ensalada de palabras» pueden desviar la atención de la responsabilidad por lo ocurrido.</p>
+<div class="source-cite">Shahida Arabi, <i>Becoming the Narcissist’s Nightmare</i>, discussion of gaslighting and accountability.</div>
+</article>
+</div>
+</section>
+<div class="flow">
+<span class="pill">① Reconocer el patrón</span><span class="arr">→</span>
+<span class="pill">② Volver al tema inicial</span><span class="arr">→</span>
+<span class="pill">③ Evitar JADE</span><span class="arr">→</span>
+<span class="pill">④ Responder con BIFF</span><span class="arr">→</span>
+<span class="pill">⑤ Alejarse si hace falta</span>
+</div>
+<section class="ref"><b>Fuentes y aclaraciones:</b>
+Los nombres metafóricos de «movimientos de sumo» son etiquetas pedagógicas; no son categorías clínicas oficiales. BIFF (Brief, Informative, Friendly, Firm) y JADE (Justify, Argue, Defend, Overexplain) se presentan en Randi Kreger, Christine Adamec y Daniel S. Lobel, <i>Stop Walking on Eggshells for Parents</i>, cap. 7. Para gaslighting, proyección, triangulación, campañas de desprestigio, gray rock, hoovering, love bombing e ira narcisista, véase Julie L. Hall, <i>The Narcissist in Your Life</i>. Sobre límites y acciones, véase Margalis Fjelstad, <i>Stop Caretaking the Borderline or Narcissist</i>, cap. 16; sobre pausas y límites, Wendy T. Behary, <i>Disarming the Narcissist</i>, cap. 7. Para las conversaciones circulares, también Shahida Arabi, <i>Becoming the Narcissist’s Nightmare</i>.
+<br/><span class="muted">Hombre de paja, whataboutism, mover la meta y DARVO no aparecen necesariamente con los mismos nombres o clasificaciones en todos estos libros. Esta guía sirve para analizar conversaciones y fijar límites; no permite diagnosticar a nadie a partir de una conducta aislada.</span></section>
+</div><div class="wrap lang-panel" hidden="" id="panel-ja" lang="ja">
+<section class="hero">
+<h1>高葛藤な対人場面でみられる操作パターンと防御法</h1>
+<p class="lead">高葛藤になりやすい会話や、境界を越えるやり取りを、典型例・仕組み・対処法に分けて見やすく整理しています。</p>
+</section>
+<h2>なすべき「短事柔断」／避けるべき「弁争守説」</h2>
+<section class="mn">
+<div class="card good">
+<h3>BIFF：なすべき</h3>
+<div class="big">短・事・柔・断</div>
+<div class="grid">
+<div class="mini"><b>短</b>＝短く<br/>1〜2文で止める</div>
+<div class="mini"><b>事</b>＝事実と必要な情報だけ<br/>長い理由を足さない</div>
+<div class="mini"><b>柔</b>＝柔らかく<br/>ていねいに、けんか腰にしない</div>
+<div class="mini"><b>断</b>＝はっきり<br/>境界や結論をぼかさない</div>
+</div>
+<p><b>合言葉：</b>「短く、事実だけ、柔らかく、でも断固。」</p>
+<p class="srcnote"><span class="src-label">書籍の抜粋</span> “brief, informative, friendly, and firm”<br/><span class="src-book">Randi Kreger, Christine Adamec &amp; Daniel S. Lobel, <i>Stop Walking on Eggshells for Parents</i>, Chapter 7.</span></p></div><div class="card bad">
+<h3>JADE：避けるべき</h3>
+<div class="big">弁・争・守・説</div>
+<div class="grid">
+<div class="mini"><b>弁</b>＝理由を並べる<br/>「そうしたのには理由があって…」</div>
+<div class="mini"><b>争</b>＝言い負かそうとする<br/>「いや、それはおかしい」</div>
+<div class="mini"><b>守</b>＝自分を弁護する<br/>「私はそんな人間ではありません」</div>
+<div class="mini"><b>説</b>＝説明を重ねる<br/>理由や例外を次々足す</div>
+</div>
+<p><b>合言葉：</b>「弁争守説は、沼の入口。」説明を増やすほど、相手に新しい材料を渡しやすくなります。</p>
+<p class="srcnote"><span class="src-label">書籍の抜粋</span> “Horde your words like silver dollars and do not JADE.”<span class="jade-inline">JADE = Justify（正当化）／Argue（反論）／Defend（自己防衛）／Overexplain（説明しすぎる）</span><br/><span class="src-book">Randi Kreger, Christine Adamec &amp; Daniel S. Lobel, <i>Stop Walking on Eggshells for Parents</i>, Chapter 7.</span></p></div></section>
+<div class="example-strip">
+<b>例：</b>
+<span class="a">A「今日は参加できませんので帰ります。」</span><br/>
+<span class="b">B「きみってほんとに付き合い悪いよね」</span><br/>
+<span class="badex">避ける：「弁:明日仕事があって。争:そうした物言いはいかがなものかと...。　　守: 最近疲れていて、説:それに……」</span>
+<span> → </span>
+<span class="goodex">短事柔断：「今日は参加できませんので、お先に失礼しますね。」（石のようにくりかえす）</span>
+</div>
+<h2>操作パターン一覧</h2>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>攻撃カード</th>
+<th>相撲風の決まり手</th>
+<th>攻撃のキャッチフレーズ／比喩</th>
+<th>攻撃の定式化</th>
+<th>わかりやすい典型シチュエーション</th><th class="diff-head">似た攻撃カードとの違い</th>
+<th>基本防御</th>
+<th>防御のキャッチフレーズ</th>
+</tr></thead>
+<tbody>
+<tr>
+<td class="attack" data-label="攻撃カード">Gaslighting</td>
+<td class="kimari" data-label="相撲風の決まり手">現実崩し</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「床を傾けておいて、“君がふらついている”と言う」</td>
+<td data-label="攻撃の定式化"><span class="formula">事実X → Xを否認・改変 → X'を事実として主張 → 相手にXを疑わせる</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="bg">（実際は、地図を見る用にスマホを貸した）</div><div class="b">B「自由に見ていいって言ったよね？」</div><div class="a">A「地図を見るために貸しただけです」</div><div class="b">B「いや、好きに見ていいって言ったよ。覚えてないの？」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈藁人形との違い〉<br/>藁人形は「相手の主張」を別の形に作り替える。Gaslighting は「実際に起きたこと」や「記憶」を書き替え、こちらの認識そのものを疑わせる。</td>
+<td class="defense" data-label="基本防御"><span class="tag avoid">弁争守説を避ける</span><br/>相手との言い争いだけで事実を決めない。重要事項は記録し、自分の認識を何度も弁明しない。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「自分の記憶を相手に書き換えさせない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Straw Man / 藁人形</td>
+<td class="kimari" data-label="相撲風の決まり手">論点替え</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「本物の主張をどけて、偽物の主張を殴る」</td>
+<td data-label="攻撃の定式化"><span class="formula">X → 一部を抽出・拡大解釈 → X'を作る → X'を攻撃 → Xを放置</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「私の許可なくスマホを見るのはやめてください」</div><div class="b">B「つまり、君のことには何も関心を持つなってこと？」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Whataboutismとの違い〉<br/>藁人形は、元の主張 X を X' に作り替えて攻撃する。Whataboutism は X を変えず、「でも君は Y」と別の話へ移る。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">短事柔断</span><br/>X'について長く弁明せず、元のXだけを繰り返す。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「偽物の主張とは戦わない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Projection / 投影</td>
+<td class="kimari" data-label="相撲風の決まり手">泥返し</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「自分についた泥を、こちらへ塗り返す」</td>
+<td data-label="攻撃の定式化"><span class="formula">自分の問題A → 相手にAを帰属 → 相手にAについて弁明させる</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「私の許可なくスマホを見るのはやめてください」</div><div class="b">B「そんなに隠したがる君のほうが信用できないよ」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈責任転嫁との違い〉<br/>投影は、自分にある問題や性質を「相手のもの」として返す。責任転嫁は、自分がした行動の責任を相手へ移す。</td>
+<td class="defense" data-label="基本防御"><span class="tag avoid">守に入らない</span><br/>すぐ自己弁護せず、「いま問題にしているのは誰のどの行動か」を確認する。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「他人の泥を自分で洗わない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Blame Shifting / 責任転嫁</td>
+<td class="kimari" data-label="相撲風の決まり手">責任送り</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「自分がしたことの請求書だけ、こちらへ回す」</td>
+<td data-label="攻撃の定式化"><span class="formula">自分の行動B →「相手のAがBをさせた」→ Bの責任を相手へ移す</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「私の許可なくスマホを見るのはやめてください」</div><div class="b">B「君が怪しい態度を取るから、見るしかなかったんだよ」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈投影との違い〉<br/>責任転嫁は「自分がしたことは、相手のせい」とする。投影は「自分にある問題や性質が、相手にある」とする。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">事＋断</span><br/>相手の事情と、相手が選んだ行動の責任を分ける。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「事情は聞いても、責任までは引き取らない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">DARVO型</td>
+<td class="kimari" data-label="相撲風の決まり手">被害返し</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「注意された瞬間、被告席と被害者席を入れ替える」</td>
+<td data-label="攻撃の定式化"><span class="formula">問題Xを指摘 → Deny（否認）→ Attack（反撃）→ 被害者／加害者を逆転</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「昨日、私のスマホを勝手に見ましたよね」</div><div class="b">B「見てない。それより、そこまで疑われる私の気持ちは考えたことある？」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈責任転嫁との違い〉<br/>責任転嫁は、責任を相手へ移すのが中心。DARVO は、否認 → 反撃 → 自分を被害者の位置へ移すところまで進む。</td>
+<td class="defense" data-label="基本防御"><span class="tag avoid">守・説を止める</span><br/>最初の論点Xを忘れない。途中から自分の人格や「相手を傷つけたか」の裁判を始めない。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「席替えに付き合わない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Circular Conversation / Word Salad</td>
+<td class="kimari" data-label="相撲風の決まり手">論点散らし</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「一球の質問に百球を投げ返す」</td>
+<td data-label="攻撃の定式化"><span class="formula">X → Y1・Y2・Y3…を大量投入 → 情報過多 → Xが埋没</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「私の許可なくスマホを見るのはやめてください」</div><div class="b">B「最近帰りも遅いし、LINEもすぐ閉じるし、前にも変なことがあったし、そもそも君は昔から……」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Whataboutismとの違い〉<br/>Whataboutism は、主に別の話 Y へ一本ずらす。Word Salad は、Y1・Y2・Y3…と話題を大量に出し、本題を埋める。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">短＋事</span><br/>一度に一論点だけ扱う。「今はスマホを勝手に見た件だけです」。続けば終了する。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「百球来ても、一球しか取らない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Whataboutism / 論点ずらし</td>
+<td class="kimari" data-label="相撲風の決まり手">横道送り</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「目の前の火事から、別の火事へ連れていく」</td>
+<td data-label="攻撃の定式化"><span class="formula">Xを指摘 →「でもあなたはY」→ Xを未処理のままYへ移動</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「私の許可なくスマホを見るのはやめてください」</div><div class="b">B「君だって前に私のスマホを触ったことあるだろ」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈藁人形との違い〉<br/>元の主張 X を作り替えるのではなく、「でも君は Y」と別の話へ移る。X は答えられないまま残る。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">短＋事＋断</span><br/>Yの正否をその場で争わない。「それは別件です。今はこの件です」。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「別件は別の箱へ」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Moving the Goalposts</td>
+<td class="kimari" data-label="相撲風の決まり手">物差し替え</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「合格した瞬間に、合格ラインを動かす」</td>
+<td data-label="攻撃の定式化"><span class="formula">条件G1を提示 → G1達成 → G2を追加 → G2達成 → G3…</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="b">B「何も隠してないなら、昨日のメッセージを見せてよ」</div><div class="a">A「分かりました。これです」</div><div class="b">B「それだけじゃ分からない。削除したメッセージも確認させて」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈JADE Trapとの違い〉<br/>Moving the Goalposts は、相手が「合格条件」を後から増やす。JADE Trap は、こちらに理由を次々説明させ、その説明を一つずつ攻める。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">事＋断</span><br/>最初に提示された条件を固定し、後から追加された条件を別問題として扱う。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「ゴールを動かされたら、追いかけない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Triangulation</td>
+<td class="kimari" data-label="相撲風の決まり手">三人寄せ</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「二人の話し合いに、勝手に三人目を連れてくる」</td>
+<td data-label="攻撃の定式化"><span class="formula">A↔Bの問題 → Cを投入 → Cの評価・意見でAへ圧力</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「スマホは勝手に見ないでください」</div><div class="b">B「Cさんも、恋人同士ならスマホくらい見せるのが普通だって言ってたよ」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Smear Campaignとの違い〉<br/>Triangulation は、第三者 C の意見を二人の間に持ち込み、こちらへの圧力に使う。Smear は、第三者へ話を広げ、こちらの評判を下げる。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">事＋断</span><br/>第三者の伝聞をそのまま証拠にしない。必要なら本人に直接確認する。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「伝言ゲームを証拠にしない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Smear Campaign</td>
+<td class="kimari" data-label="相撲風の決まり手">評判落とし</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「本人を説得できないので、周囲の見る目を変える」</td>
+<td data-label="攻撃の定式化"><span class="formula">対立X → Xを歪めたX'を第三者へ流す → 相手の信用を低下させる</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="bg">（その後BがCに）</div><div class="b">B「Aってスマホを絶対見せないんだよ。何か隠してるんじゃないかな」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Triangulationとの違い〉<br/>Triangulation は、C の意見をこちらへの圧力に使う。Smear は、C や周囲へ歪めた話を広め、こちらの信用を下げる。</td>
+<td class="defense" data-label="基本防御"><span class="tag avoid">争に入らない</span><br/>全員に反論しようとしない。必要な人にだけ、簡潔な事実や記録を示す。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「街中を説得しない。必要な人に事実を渡す」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Baiting / Provocation</td>
+<td class="kimari" data-label="相撲風の決まり手">反応釣り</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「何度もつつき、怒った瞬間だけを問題にする」</td>
+<td data-label="攻撃の定式化"><span class="formula">挑発1・2・3 → 相手の反応E → 挑発を無視 → Eだけを攻撃材料にする</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="b">B「そんなに見られたら困るものがあるの？」</div><div class="a">A「そういう話ではありません」</div><div class="b">B「必死になるところを見ると、やっぱり怪しいね」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Rageとの違い〉<br/>Baiting は、相手を挑発して「反応」を引き出し、その反応を攻撃材料にする。Rage は、自分の怒りや威圧で相手を引かせる。</td>
+<td class="defense" data-label="基本防御"><span class="tag avoid">争・守を避ける</span><br/>挑発の内容を一つ一つ反証しない。Gray Rock、短い境界、必要なら退出。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「餌に食いついて、反応を渡さない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Rage / Intimidation</td>
+<td class="kimari" data-label="相撲風の決まり手">威圧押し</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「論理の代わりに、音量と恐怖で押す」</td>
+<td data-label="攻撃の定式化"><span class="formula">境界・反論X → 怒声・威嚇 → 相手の恐怖↑ → Xを撤回させる</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「私のスマホを勝手に見るのはやめてください」</div><div class="b">B「いちいちうるさいんだよ！俺を疑ってるのか！」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Baitingとの違い〉<br/>Rage は、怒声や威圧そのもので相手を押す。Baiting は、相手を怒らせ、その反応を「ほら、感情的だ」と攻撃材料にする。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">短＋断</span><br/>怒っている相手をその場で説得しない。Time-out、退出。危険を感じるなら安全確保を優先。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「火事場で会議をしない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Silent Treatment / Stonewalling</td>
+<td class="kimari" data-label="相撲風の決まり手">黙り締め</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「沈黙を使って、こちらに追わせる」</td>
+<td data-label="攻撃の定式化"><span class="formula">対立X → 接触・応答を遮断 → 相手の不安↑ → 相手が追う・謝る・撤回する</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「昨日のスマホの件を話したいです」</div><div class="b">B「……」</div><div class="a">A「返事だけでもしてもらえますか」</div><div class="b">B「……」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Rageとの違い〉<br/>Rage は、大きな声や威圧で圧力をかける。Silent Treatment は、逆に返事をやめ、沈黙や無視を圧力として使う。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">短＋断</span><br/>必要な連絡を一度したら追い続けない。自分の生活へ戻る。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「閉じたドアを百回ノックしない」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Hoovering</td>
+<td class="kimari" data-label="相撲風の決まり手">吸い戻し</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「離れられそうになった瞬間だけ、強く引き戻す」</td>
+<td data-label="攻撃の定式化"><span class="formula">相手が距離を取る → 謝罪・愛情・約束を急増 → 再接近 → 元の関係へ</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="bg">（スマホを勝手に見ることが続き、Aが別れを切り出した）</div><div class="a">A「この関係から離れたいです」</div><div class="b">B「全部分かった。もう二度としない。君しかいないんだ」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Love Bombingとの違い〉<br/>Love Bombing は、関係の初めに一気に距離を縮める。Hoovering は、一度離れた後に、謝罪や愛情で関係へ引き戻す。</td>
+<td class="defense" data-label="基本防御"><span class="tag avoid">急いで戻らない</span><br/>その場の言葉ではなく、時間を通した一貫した行動変化を見る。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「花束ではなく、季節を見る」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">Love Bombing</td>
+<td class="kimari" data-label="相撲風の決まり手">愛情浴びせ</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「親密さの階段を、一気に何段も飛ばす」</td>
+<td data-label="攻撃の定式化"><span class="formula">短期間の過剰な称賛・接触 → 急速な親密化 → 境界を下げる</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="bg">（知り合って間もない）</div><div class="b">B「君とは全部共有したい。パスコードも教え合おうよ。隠し事なんて必要ないでしょ？」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Hooveringとの違い〉<br/>Love Bombing は、関係の初めに親密さを急に深める。Hoovering は、離れた相手を再び関係へ戻そうとする。</td>
+<td class="defense" data-label="基本防御"><span class="tag use">短＋断</span><br/>親密さの速度を落とす。個人情報・金銭・端末・生活圏を急いで共有しない。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「親密さにも速度制限がある」</td>
+</tr>
+<tr>
+<td class="attack" data-label="攻撃カード">JADE Trap</td>
+<td class="kimari" data-label="相撲風の決まり手">説明沼</td>
+<td class="catch" data-label="攻撃のキャッチフレーズ／比喩">「説明するたび、新しい反論材料を渡す」</td>
+<td data-label="攻撃の定式化"><span class="formula">境界X → 理由Aを要求 → Aを攻略 → 理由Bを要求 → Bも攻略 → 無限化</span></td>
+<td data-label="わかりやすい典型シチュエーション"><div class="scene"><div class="a">A「スマホを勝手に見ないでください」</div><div class="b">B「なんで？恋人なのに？」</div><div class="a">A「プライバシーだからです」</div><div class="b">B「じゃあ、隠し事がなければ見ても問題ないよね？」</div></div></td><td class="diff" data-label="似た攻撃カードとの違い">〈Moving the Goalpostsとの違い〉<br/>JADE Trap は、「なぜ？」を重ねてこちらの説明を増やし、その説明を一つずつ攻める。Moving the Goalposts は、達成条件そのものを後から変える。</td>
+<td class="defense" data-label="基本防御"><span class="tag avoid">弁争守説を止める</span><span class="tag use">短事柔断へ</span><br/>Justify・Argue・Defend・Overexplain を止める。境界そのものを短く繰り返す。</td>
+<td class="defcatch" data-label="防御のキャッチフレーズ">「説明するほど沈む」</td>
+</tr>
+</tbody>
+</table>
+</div>
+<section class="source-panel">
+<div class="source-head">
+<h2>本から見る、防御の要点</h2>
+<p class="muted">下の短い抜粋は、表で使っている防御の考え方が、どの本に基づくかを確認するためのものです。「決まり手」名は本の正式用語ではありません。</p>
+</div>
+<div class="source-grid">
+<article class="source-card">
+<div class="source-topic">現実崩し／Gaslighting</div>
+<blockquote>“leading him/her to question his/her perceptions of reality”</blockquote>
+<p>相手自身の現実認識を疑わせる操作として定義されています。</p>
+<div class="source-cite">Julie L. Hall, <i>The Narcissist in Your Life</i>, Glossary: “gaslighting”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">Gray Rock</div>
+<blockquote>“dull and nonreactive, like a colorless, unmoving, impervious rock”</blockquote>
+<p>挑発に対して反応を小さくし、葛藤を拡大させない境界戦略として説明されています。</p>
+<div class="source-cite">Julie L. Hall, <i>The Narcissist in Your Life</i>, Glossary: “gray rock”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">境界は説明より実行</div>
+<blockquote>“Actions are more believable and have more impact than words.”</blockquote>
+<p>境界を延々説明して同意を得るより、自分が取る行動を決め、実行することを重視しています。</p>
+<div class="source-cite">Margalis Fjelstad, <i>Stop Caretaking the Borderline or Narcissist</i>, Chapter 16, “Take Action, Not Discussion”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">境界の主導権</div>
+<blockquote>“You hold power primarily over what you will do if the boundary is breached.”</blockquote>
+<p>境界とは相手を支配する命令ではなく、越えられたとき自分がどうするかを決めるものだと整理できます。</p>
+<div class="source-cite">Margalis Fjelstad, <i>Stop Caretaking the Borderline or Narcissist</i>, Chapter 16, “Set Boundaries and Limits”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">Time-out</div>
+<blockquote>“consider taking a time-out so both of you can cool down”</blockquote>
+<p>会話が過熱した場合、その場で勝負を続けず、いったん離れて再開する方法が勧められています。</p>
+<div class="source-cite">Wendy T. Behary, <i>Disarming the Narcissist</i>, Chapter 7, “Using Empathic Confrontation”.</div>
+</article>
+<article class="source-card">
+<div class="source-topic">論点散らし</div>
+<blockquote>“circular conversations and word salad”</blockquote>
+<p>説明責任から注意をそらす会話パターンとして、循環する会話と word salad が挙げられています。</p>
+<div class="source-cite">Shahida Arabi, <i>Becoming the Narcissist’s Nightmare</i>, discussion of gaslighting and accountability.</div>
+</article>
+</div>
+</section>
+<div class="flow">
+<span class="pill">① 攻撃カードを特定</span><span class="arr">→</span>
+<span class="pill">② 元の論点を固定</span><span class="arr">→</span>
+<span class="pill">③ 弁争守説を止める</span><span class="arr">→</span>
+<span class="pill">④ 短事柔断で返す</span><span class="arr">→</span>
+<span class="pill">⑤ 必要なら退出</span>
+</div>
+<section class="ref"><b>出典と用語上の注意：</b>
+    「現実崩し」「論点替え」「泥返し」「責任送り」などの決まり手名、および「弁争守説」「短事柔断」は、この教材で覚えやすくするために付けた訓練用の日本語ラベルです。<br/>
+    JADE（Justify / Argue / Defend / Overexplain）と BIFF（Brief / Informative / Friendly / Firm）は、Randi Kreger ら <i>Stop Walking on Eggshells for Parents</i> Chapter 7 に基づきます。Gaslighting、Projection、Triangulation、Smear Campaign、Gray Rock、Hoovering、Love Bombing、Narcissistic Rage などは Julie L. Hall <i>The Narcissist in Your Life</i> の用語集・関連章を参照しています。境界設定と「議論より行動」は Margalis Fjelstad <i>Stop Caretaking the Borderline or Narcissist</i> Chapter 16、Time-out と限界設定は Wendy T. Behary <i>Disarming the Narcissist</i> Chapter 7 を参照しています。Circular Conversation / Word Salad は Shahida Arabi <i>Becoming the Narcissist’s Nightmare</i> の記述も参照しています。<br/>
+<span class="muted">なお、Straw Man、Whataboutism、Moving the Goalposts、DARVO などは、これらの本すべてが同じ名称・分類で提示しているわけではありません。本資料では会話構造を比較するための一般的な名称として区別して表示しています。本資料は診断用ではなく、対人場面でのパターン認識と境界設定の訓練用です。</span></section>
+</div><script>(function(){
+  const buttons=[...document.querySelectorAll('[data-switch-lang]')];
+  const panels={es:document.getElementById('panel-es'),ja:document.getElementById('panel-ja')};
+  function setLanguage(lang){
+    for(const [name, panel] of Object.entries(panels)){panel.hidden=name!==lang;}
+    for(const b of buttons){const active=b.dataset.switchLang===lang;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));}
+    document.documentElement.lang=lang;
+    document.title=lang==='es'?'Patrones de comunicación difíciles | Español':'対人場面の会話パターンと対処法 | 日本語';
+  }
+  buttons.forEach(b=>b.addEventListener('click',()=>setLanguage(b.dataset.switchLang)));
+  setLanguage('es');
+})();</script></body>
+</html>
